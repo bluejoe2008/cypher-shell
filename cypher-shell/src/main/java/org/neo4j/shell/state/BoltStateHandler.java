@@ -1,35 +1,20 @@
 package org.neo4j.shell.state;
 
+import org.neo4j.driver.*;
+import org.neo4j.driver.exceptions.ClientException;
+import org.neo4j.driver.exceptions.SessionExpiredException;
+import org.neo4j.shell.*;
+import org.neo4j.shell.exception.CommandException;
+import org.neo4j.shell.log.NullLogging;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
-import org.neo4j.driver.AccessMode;
-import org.neo4j.driver.AuthToken;
-import org.neo4j.driver.AuthTokens;
-import org.neo4j.driver.Config;
-import org.neo4j.driver.Driver;
-import org.neo4j.driver.GraphDatabase;
-import org.neo4j.driver.Session;
-import org.neo4j.driver.Statement;
-import org.neo4j.driver.StatementResult;
-import org.neo4j.driver.Transaction;
-import org.neo4j.driver.exceptions.ClientException;
-import org.neo4j.driver.exceptions.SessionExpiredException;
-import org.neo4j.driver.internal.SessionConfig;
-import org.neo4j.driver.summary.DatabaseInfo;
-import org.neo4j.shell.ConnectionConfig;
-import org.neo4j.shell.Connector;
-import org.neo4j.shell.DatabaseManager;
-import org.neo4j.shell.TransactionHandler;
-import org.neo4j.shell.TriFunction;
-import org.neo4j.shell.exception.CommandException;
-import org.neo4j.shell.log.NullLogging;
 
 /**
  * Handles interactions with the driver
@@ -56,33 +41,24 @@ public class BoltStateHandler implements TransactionHandler, Connector, Database
     }
 
     @Override
-    public void setActiveDatabase(String databaseName) throws CommandException
-    {
+    public void setActiveDatabase(String databaseName) throws CommandException {
         if (isTransactionOpen()) {
             throw new CommandException("There is an open transaction. You need to close it before you can switch database.");
         }
         String previousDatabaseName = activeDatabaseNameAsSetByUser;
         activeDatabaseNameAsSetByUser = databaseName;
-        try
-        {
-            if ( isConnected() )
-            {
-                reconnect( false );
+        try {
+            if (isConnected()) {
+                reconnect(false);
             }
-        }
-        catch ( ClientException e )
-        {
-            if ( isInteractive )
-            {
+        } catch (ClientException e) {
+            if (isInteractive) {
                 // We want to try to connect to the previous database
                 activeDatabaseNameAsSetByUser = previousDatabaseName;
-                try
-                {
-                    reconnect( false );
-                }
-                catch ( ClientException e2 )
-                {
-                    e.addSuppressed( e2 );
+                try {
+                    reconnect(false);
+                } catch (ClientException e2) {
+                    e.addSuppressed(e2);
                 }
             }
             throw e;
@@ -90,14 +66,12 @@ public class BoltStateHandler implements TransactionHandler, Connector, Database
     }
 
     @Override
-    public String getActiveDatabaseAsSetByUser()
-    {
+    public String getActiveDatabaseAsSetByUser() {
         return activeDatabaseNameAsSetByUser;
     }
 
     @Override
-    public String getActualDatabaseAsReportedByServer()
-    {
+    public String getActualDatabaseAsReportedByServer() {
         return actualDatabaseNameAsReportedByServer;
     }
 
@@ -173,6 +147,8 @@ public class BoltStateHandler implements TransactionHandler, Connector, Database
 
     private void reconnect(boolean keepBookmark) {
         // This will already throw an exception if there is no connectivity
+
+        /*
         driver.verifyConnectivity();
 
         SessionConfig.Builder builder = SessionConfig.builder();
@@ -190,6 +166,17 @@ public class BoltStateHandler implements TransactionHandler, Connector, Database
         }
 
         session = driver.session( builder.build() );
+
+        String query = activeDatabaseNameAsSetByUser.compareToIgnoreCase(SYSTEM_DB_NAME) == 0 ? "SHOW DATABASES" : "RETURN 1";
+
+        resetActualDbName(); // Set this to null first in case run throws an exception
+        StatementResult run = session.run(query);
+
+        this.version = run.summary().server().version();
+        updateActualDbName(run);
+        */
+
+        session = driver.session();
 
         String query = activeDatabaseNameAsSetByUser.compareToIgnoreCase(SYSTEM_DB_NAME) == 0 ? "SHOW DATABASES" : "RETURN 1";
 
@@ -257,8 +244,11 @@ public class BoltStateHandler implements TransactionHandler, Connector, Database
     }
 
     private String getActualDbName(@Nonnull StatementResult statementResult) {
-        DatabaseInfo dbInfo = statementResult.summary().database();
-        return dbInfo.name() == null ? ABSENT_DB_NAME : dbInfo.name();
+        String dbname = null;
+        //dbname = statementResult.summary().database().name;
+        //DatabaseInfo dbInfo = statementResult.summary().database();
+        //return dbInfo.name() == null ? ABSENT_DB_NAME : dbInfo.name();
+        return dbname == null ? ABSENT_DB_NAME : dbname;
     }
 
     private void updateActualDbName(@Nonnull StatementResult statementResult) {
