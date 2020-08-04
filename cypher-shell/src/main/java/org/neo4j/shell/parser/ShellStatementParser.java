@@ -63,9 +63,12 @@ public class ShellStatementParser implements StatementParser {
                 continue;
             }
 
+            //<--pandadb: ignore comments because BlobLiteral uses //
+            /*
             if (handleComments(prev, current)) {
                 continue;
             }
+             */
 
             if (current == BACKSLASH) {
                 // backslash can escape stuff outside of comments (but inside quotes too!)
