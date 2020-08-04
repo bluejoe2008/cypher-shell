@@ -1,9 +1,9 @@
 ## How to build
 
-Use `make help` (`gradlew tasks`) to list possible tasks. But you
+Use `make help` (`./gradlew tasks`) to list possible tasks. But you
 probably want either
 
--  `make build` (`gradlew installDist`) which will build an
+-  `make build` (`./gradlew installDist`) which will build an
    uber-jar and runnable script for you at
    `cypher-shell/build/install/cypher-shell`
 
