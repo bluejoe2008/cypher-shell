@@ -39,6 +39,7 @@ allprojects {
 subprojects {
     apply plugin: 'java'
     apply plugin: 'distribution'
+    apply plugin: 'maven-publish'
     apply plugin: 'com.github.johnrengelman.shadow'
     apply from: "$rootProject.projectDir/gradle/integration-test.gradle"
     apply plugin: 'jacoco'
