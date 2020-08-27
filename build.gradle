@@ -30,18 +30,22 @@ allprojects {
     repositories {
         mavenLocal()
         jcenter()
-        maven {
-            url "http://m2.neo4j.org/content/repositories/snapshots"
+        maven{
+            // 私服地址
+            url = 'http://10.0.82.220:8081/repository/maven-snapshots/'
         }
+//        maven { url 'http://maven.aliyun.com/nexus/content/groups/public/' }
     }
 }
 
 subprojects {
     apply plugin: 'java'
+    apply plugin: "maven"
     apply plugin: 'distribution'
     apply plugin: 'maven-publish'
     apply plugin: 'com.github.johnrengelman.shadow'
     apply from: "$rootProject.projectDir/gradle/integration-test.gradle"
+    apply from: "$rootProject.projectDir/cypher-shell/build-upload.gradle"
     apply plugin: 'jacoco'
     apply plugin: 'info.solidsoft.pitest'
 

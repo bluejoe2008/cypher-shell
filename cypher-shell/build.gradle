@@ -1,4 +1,5 @@
-version = buildVersion
+version = '1.0.0-SNAPSHOT'
+apply plugin: 'maven-publish'
 
 task generateBuildProperties {
   def outputDir = file("${buildDir}/resources/main")
@@ -6,7 +7,7 @@ task generateBuildProperties {
     outputDir.exists() || outputDir.mkdirs()
     def propFile = new File(outputDir, "build.properties")
     def props = new Properties()
-    props.setProperty("version", buildVersion)
+    props.setProperty("version", '1.0.0-SNAPSHOT')
     props.setProperty("driverVersion", neo4jJavaDriverVersion)
     props.store(propFile.newWriter(), null)
   }
@@ -21,8 +22,8 @@ jar {
 }
 
 shadowJar {
-  // Insure no version number is included in jar name
-  version = null
+    // Insure no version number is included in jar name
+    version = '1.0.0-SNAPSHOT'
 }
 
 distributions {
@@ -35,25 +36,26 @@ distributions {
   }
 }
 
-// 源码包
+//源码包
 task sourceJar(type: Jar) {
     from sourceSets.main.allJava
     classifier "sources"
 }
 
-//maven-publish 扩展名
+////maven-publish 扩展名
 publishing {
     // 配置发布的项目信息
     publications{
-        library(MavenPublication){
+        maven(MavenPublication){
             // MavenPublication 中有一些属性，主要包括groupId，artifactId，version,from,artifact
             // 其中groupId，artifactId，version，artifact都是选填的，不填默认去取项目的相关信息；
             groupId project.group // 项目的group
-            artifactId 'test-'+project.name //项目name
-            version project.version
+            artifactId project.name //项目name
             //如果打成war包填写components.web，如果打成jar包填写components.java
             from components.java
-            artifact sourceJar
+            artifact sourceJar {
+                from shadowJar
+            }
         }
     }
     // 配置发布的地址
